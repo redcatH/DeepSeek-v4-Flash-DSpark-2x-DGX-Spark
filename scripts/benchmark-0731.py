@@ -1,4 +1,5 @@
 import argparse
+import os
 import asyncio
 import json
 import statistics
@@ -10,7 +11,7 @@ from pathlib import Path
 
 def request_json(url, body):
     for attempt in range(4):
-        request = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
+        request = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json", **({"Authorization": "Bearer " + os.environ["OPENAI_API_KEY"]} if os.environ.get("OPENAI_API_KEY") else {})})
         try:
             with urllib.request.urlopen(request, timeout=3600) as response:
                 return json.load(response)
@@ -43,7 +44,7 @@ def stream_one(base_url, model, prompt, thinking_token_budget=None, max_tokens=4
     body = {"model": model, "messages": [{"role": "user", "content": prompt + instruction}], "stream": True, "stream_options": {"include_usage": True}, "temperature": 0.6, "top_p": 0.95, "max_tokens": max_tokens}
     if thinking_token_budget is not None:
         body["thinking_token_budget"] = thinking_token_budget
-    request = urllib.request.Request(f"{base_url}/chat/completions", data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
+    request = urllib.request.Request(f"{base_url}/chat/completions", data=json.dumps(body).encode(), headers={"Content-Type": "application/json", **({"Authorization": "Bearer " + os.environ["OPENAI_API_KEY"]} if os.environ.get("OPENAI_API_KEY") else {})})
     started = time.perf_counter()
     first = None
     usage = None
